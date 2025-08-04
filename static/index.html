@@ -1,18 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>AI Voice Agent</title>
-    <style ></style>
-</head>
-<body>
-    <div id="app">
-        <h1>🎙️ Day 2: AI Voice Agent Project</h1>
-        <p>Welcome! Backend connected.</p>
-        <button id="testBtn">Test API</button>
-        <div id="output"></div>
-    </div>
-    <script src="/static/app.js"></script>
-</body>
+<html lang="en" class="h-full">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link
+			rel="icon"
+			href="/static/favicon.png"
+			sizes="32x32"
+			type="image/png"
+		/>
+		<title>VoiceAI - Text to Speech</title>
+		<!-- Tailwind CSS via CDN -->
+		<script src="https://cdn.tailwindcss.com"></script>
+		<meta name="color-scheme" content="light dark" />
+	</head>
+	<body
+		class="h-full bg-orange-50 dark:bg-gray-900 text-gray-900 dark:text-orange-50 antialiased transition-colors"
+	>
+		<div class="min-h-screen flex flex-col">
+			<header class="flex items-center justify-between p-4 sm:p-6 lg:p-8">
+				<div class="flex items-center gap-2 sm:gap-3">
+					<div
+						class="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-red-600 dark:from-orange-400 dark:to-red-500 rounded-2xl flex items-center justify-center shadow-lg"
+					>
+						<svg
+							class="w-5 h-5 sm:w-6 sm:h-6 text-white"
+							fill="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								d="M12 2C13.1 2 14 2.9 14 4V10C14 11.1 13.1 12 12 12C10.9 12 10 11.1 10 10V4C10 2.9 10.9 2 12 2M19 10V12C19 15.9 15.9 19 12 19S5 15.9 5 12V10H7V12C7 14.8 9.2 17 12 17S17 14.8 17 12V10H19Z"
+							/>
+						</svg>
+					</div>
+					<div>
+						<h1
+							class="text-lg sm:text-xl font-bold text-gray-900 dark:text-orange-50"
+						>
+							VoiceAI
+						</h1>
+						<p
+							class="text-xs sm:text-sm text-gray-600 dark:text-orange-200"
+						>
+							Text to Speech
+						</p>
+					</div>
+				</div>
+				<button
+					id="theme-toggle"
+					class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-gray-800 shadow-md border border-orange-200 dark:border-gray-700 flex items-center justify-center hover:shadow-lg hover:bg-orange-50 dark:hover:bg-gray-700 transition-all duration-200"
+				>
+					<svg
+						class="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 dark:text-orange-300"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+						/>
+					</svg>
+				</button>
+			</header>
+
+			<main
+				class="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-16 lg:-mt-20"
+			>
+				<div class="w-full max-w-5xl text-center mb-8 sm:mb-12">
+					<h2
+						class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-400 dark:to-red-400 bg-clip-text text-transparent"
+					>
+						Convert Text to Speech
+					</h2>
+					<p
+						class="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-orange-200 max-w-3xl mx-auto"
+					>
+						Enter your text below and generate natural-sounding
+						audio
+					</p>
+				</div>
+
+				<div class="w-full max-w-4xl">
+					<div
+						class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-orange-200 dark:border-gray-700 rounded-2xl lg:rounded-3xl p-6 sm:p-8 lg:p-10 shadow-xl"
+					>
+						<label
+							class="block text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-gray-800 dark:text-orange-100 text-center"
+							>Enter Your text</label
+						>
+						<div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+							<input
+								type="text"
+								id="tts-text"
+								placeholder="Type your message here..."
+								class="flex-1 bg-orange-50 dark:bg-gray-700 border border-orange-300 dark:border-gray-600 rounded-xl px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base lg:text-lg placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-orange-400 focus:border-transparent transition-all duration-200"
+							/>
+							<button
+								id="tts-submit"
+								class="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 dark:from-orange-400 dark:to-red-500 dark:hover:from-orange-500 dark:hover:to-red-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 whitespace-nowrap"
+							>
+								Generate
+							</button>
+						</div>
+
+						<div
+							id="tts-status"
+							class="text-sm text-gray-500 dark:text-orange-300 mt-4 min-h-5"
+						></div>
+
+						<div class="mt-6">
+							<audio
+								id="tts-audio"
+								controls
+								class="w-full rounded-lg outline-none"
+							></audio>
+						</div>
+
+						<div
+							class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm text-gray-500 dark:text-orange-300"
+						>
+							<div class="flex items-center gap-2">
+								<span
+									class="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"
+								></span>
+								<span
+									class="text-emerald-600 dark:text-emerald-400 font-medium"
+									>Ready</span
+								>
+							</div>
+							<div>
+								<button id="testBtn" class="hidden"></button>
+								<span id="output" class="sr-only"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+
+			<footer class="text-center py-6 sm:py-8">
+				<p
+					class="text-sm sm:text-base text-gray-600 dark:text-orange-200"
+				>
+					Made with
+					<span class="text-red-500 animate-pulse">❤️</span> by
+					<span
+						class="font-semibold text-orange-600 dark:text-orange-400"
+						>Khushal Kumar</span
+					>
+				</p>
+			</footer>
+		</div>
+
+		<script src="/static/app.js"></script>
+	</body>
 </html>
