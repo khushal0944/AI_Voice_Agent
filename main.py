@@ -1,15 +1,19 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from murf import Murf
 import os
+import shutil
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
 app = FastAPI(title="AI Voice Agent - Day 2", version="1.0.0")
+
+# Create uploads directory if it doesn't exist
+os.makedirs("uploads", exist_ok=True)
 
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -54,12 +58,28 @@ async def generate_speech(request: TTSRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
 
-# Health check
-@app.get("/api/health")
-async def health_check():
-    return {
-        "status": "AI Voice Agent Running!",
-        "day": 2,
-        "endpoint": "/api/text-to-speech",
-        "murf_sdk": "Ready"
-    }
+
+
+# Upload endpoint
+@app.post("/api/upload")
+async def upload_audio(file: UploadFile = File(...)):
+    """
+    Receive an audio file, save it, and return its metadata.
+    """
+    upload_folder = "uploads"
+    file_path = os.path.join(upload_folder, file.filename)
+    
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        file_size = os.path.getsize(file_path)
+        
+        return {
+            "filename": file.filename,
+            "content_type": file.content_type,
+            "size": file_size
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
