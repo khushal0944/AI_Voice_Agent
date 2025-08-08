@@ -4,16 +4,16 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from murf import Murf
 import os
-import shutil
 from dotenv import load_dotenv
+import assemblyai as aai
 
 # Load environment variables
 load_dotenv()
 
-app = FastAPI(title="AI Voice Agent - Day 2", version="1.0.0")
+# Initialize AssemblyAI
+aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 
-# Create uploads directory if it doesn't exist
-os.makedirs("uploads", exist_ok=True)
+app = FastAPI(title="AI Voice Agent - Day 7", version="1.0.0")
 
 # Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -33,7 +33,7 @@ async def get_home():
     with open("static/index.html", "r", encoding="utf-8") as file:
         return HTMLResponse(content=file.read())
 
-# TTS endpoint - exactly what the task asks for
+# TTS endpoint
 @app.post("/api/text-to-speech")
 async def generate_speech(request: TTSRequest):
     """
@@ -60,26 +60,41 @@ async def generate_speech(request: TTSRequest):
 
 
 
-# Upload endpoint
-@app.post("/api/upload")
-async def upload_audio(file: UploadFile = File(...)):
+@app.post("/api/tts/echo")
+async def tts_echo(file: UploadFile = File(...)):
     """
-    Receive an audio file, save it, and return its metadata.
+    Transcribe audio, generate new audio with Murf, and return the audio URL.
     """
-    upload_folder = "uploads"
-    file_path = os.path.join(upload_folder, file.filename)
-    
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        file_size = os.path.getsize(file_path)
-        
+        # 1. Transcribe the uploaded audio file
+        audio_data = await file.read()
+        transcriber = aai.Transcriber()
+        transcript = transcriber.transcribe(audio_data)
+
+        if transcript.status == aai.TranscriptStatus.error:
+            raise HTTPException(status_code=500, detail=f"Transcription failed: {transcript.error}")
+
+        transcribed_text = transcript.text
+        if not transcribed_text or not transcribed_text.strip():
+            # Return a successful response but with a note that no speech was generated
+            return {
+                "audio_url": None,
+                "transcript": "(No speech detected)"
+            }
+
+        # 2. Generate new audio from the transcribed text using Murf
+        murf_response = client.text_to_speech.generate(
+            text=transcribed_text,
+            voice_id="en-US-ken",  # Using a default voice
+            style="Conversational"
+        )
+
+        # 3. Return the new audio URL and the transcript
         return {
-            "filename": file.filename,
-            "content_type": file.content_type,
-            "size": file_size
+            "audio_url": murf_response.audio_file,
+            "transcript": transcribed_text
         }
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+        # Catch any exception, including from Murf or AssemblyAI
+        raise HTTPException(status_code=500, detail=f"Echo Bot failed: {str(e)}")
