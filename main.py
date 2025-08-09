@@ -6,12 +6,16 @@ from murf import Murf
 import os
 from dotenv import load_dotenv
 import assemblyai as aai
+import google.generativeai as genai
 
 # Load environment variables
 load_dotenv()
 
 # Initialize AssemblyAI
 aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
+
+# Initialize Google Gemini
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 app = FastAPI(title="AI Voice Agent - Day 7", version="1.0.0")
 
@@ -21,11 +25,17 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Initialize Murf client
 client = Murf(api_key=os.getenv("MURF_API_KEY"))
 
-# Request model
+# Request models
 class TTSRequest(BaseModel):
     text: str
     voice_id: str = "en-US-ken"
     style: str = "Conversational"
+
+class LLMRequest(BaseModel):
+    text: str
+    model: str = "gemini-1.5-flash"
+    max_tokens: int = 1000
+    temperature: float = 0.7
 
 # Serve homepage
 @app.get("/", response_class=HTMLResponse)
@@ -57,8 +67,6 @@ async def generate_speech(request: TTSRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
-
-
 
 @app.post("/api/tts/echo")
 async def tts_echo(file: UploadFile = File(...)):
@@ -98,3 +106,33 @@ async def tts_echo(file: UploadFile = File(...)):
     except Exception as e:
         # Catch any exception, including from Murf or AssemblyAI
         raise HTTPException(status_code=500, detail=f"Echo Bot failed: {str(e)}")
+
+# New LLM Query endpoint
+@app.post("/llm/query")
+async def llm_query(request: LLMRequest):
+    """
+    Accept text input and generate a response using Google's Gemini API
+    """
+    try:
+        model = genai.GenerativeModel(request.model)
+        
+        generation_config = genai.types.GenerationConfig(
+            max_output_tokens=request.max_tokens,
+            temperature=request.temperature
+        )
+        response = model.generate_content(
+            request.text,
+            generation_config=generation_config
+        )
+        if response.text:
+            return {
+                "response": response.text,
+                "input": request.text,
+                "model": request.model,
+                "tokens_used": len(response.text.split()) if response.text else 0
+            }
+        else:
+            raise HTTPException(status_code=500, detail="No response generated from LLM")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LLM query failed: {str(e)}")
